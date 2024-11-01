@@ -30,7 +30,7 @@ export class ProductsService {
     }
   }
 
-  async findAll(): Promise<Product[]> {
+  async findAll(order: 'asc' | 'desc' = 'asc'): Promise<Product[]> {
     try {
       const snapshot: DataSnapshot = await get(this.dataRef);
       if (!snapshot.exists()) {
@@ -38,10 +38,17 @@ export class ProductsService {
       }
       console.log('Retrieve data successful');
       const products = snapshot.val();
-      return Object.keys(products).map((key) => ({
+
+      const productList = Object.keys(products).map((key) => ({
         id: key,
         ...products[key],
       }));
+
+      productList.sort((a, b) => {
+        return order === 'asc' ? a.price - b.price : b.price - a.price;
+      });
+
+      return productList;
     } catch (e) {
       console.error('Error retrieving products:', e);
       throw new Error('Could not retrieve products');
@@ -68,6 +75,7 @@ export class ProductsService {
     updateProductDto: UpdateProductDto,
   ): Promise<Product> {
     const productRef = ref(firebaseDatabase, `Shoes/${id}`);
+
     try {
       await update(productRef, updateProductDto);
       console.log('Update product successful');
